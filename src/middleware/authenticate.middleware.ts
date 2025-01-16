@@ -1,49 +1,40 @@
-// import logger from "../configs/logger.config.js";
-// import { User } from "../model/index.js";
-// import jwtService from "../service/jwt.service.js";
+import { Context, Next } from "hono";
+import { JWTService } from "../service/jwt.service";
+import { responseDTO } from "../dto/responseDTO";
+import logger from "../configs/logger.config";
+import { AuthService } from "../service/auth.service";
+import { HTTPException } from "hono/http-exception";
 
-// /**
-//  * Middleware to authenticate user requests
-//  * @param {Object} req - Express request object
-//  * @param {Object} res - Express response object
-//  * @param {Function} next - Express next middleware function
-//  * @returns {void}
-//  */
-// const authenticateMiddleware = async (
-//   req: Request,
-//   res: Response,
-//   next: NextFunction
-// ): Promise<void | Response<any, Record<string, any>>> => {
-//   try {
-//     const { authorization } = req.headers;
-//     if (!authorization) {
-//       return res.status(401).json({ message: "Access token is missing" });
-//     }
+const auth = async (c: Context, next: Next) => {
+  try {
+    const authHeader = c.req.header("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      throw new HTTPException(401, { message: "Unauthorized" });
+    }
 
-//     const token = authorization.split(" ")[1];
-//     if (!token) {
-//       return res.status(401).json({ message: "Access token is malformed" });
-//     }
+    const token = authHeader.split(" ")[1];
 
-//     const decoded = jwtService.verifyAccessToken(token);
-//     if (!decoded) {
-//       return res.status(401).json({ message: "Invalid access token" });
-//     }
+    // Verify token
+    const jwtService = new JWTService(c.env.JWT_SECRET);
+    const payload = await jwtService.verifyAccessToken(token);
 
-//     if (typeof decoded !== "string" && "userId" in decoded) {
-//       const user = await User.findById(decoded.userId);
-//       if (!user) {
-//         return res.status(401).json({ message: "Invalid access token" });
-//       }
-//       req.user = user;
-//     } else {
-//       return res.status(401).json({ message: "Invalid access token" });
-//     }
-//     next();
-//   } catch (error) {
-//     logger.error("Error in authenticateMiddleware:", error);
-//     return res.status(401).json({ message: "Authentication failed" });
-//   }
-// };
+    if (!payload || !payload.sub) {
+      throw new Error("Invalid token payload");
+    }
 
-// export default authenticateMiddleware;
+    const authService = new AuthService(c.env.DB);
+    const user = await authService.getUserById(Number(payload.sub));
+
+    // Add user to context
+    c.set("user", user);
+
+    await next();
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : "Unauthorized";
+    logger.error(`Auth middleware error: ${errorMessage}`);
+    throw new HTTPException(401, { message: errorMessage });
+  }
+};
+
+export { auth };

@@ -2,15 +2,20 @@ import { Hono } from "hono";
 import { ENV } from "./types/types";
 import { cors } from "hono/cors";
 import routes from "./routes/routes";
+import logger from "./configs/logger.config";
+import { HTTPException } from "hono/http-exception";
 
 const app = new Hono<{ Bindings: ENV }>();
 
 app.use("*", async (c, next) => {
   try {
+    const startTime = performance.now();
     await next();
+    const endTime = performance.now();
+    logger.info(`Total Time taken: ${endTime - startTime}ms`);
   } catch (err) {
-    console.error(err);
-    return c.json({ error: "Internal Server Error" }, 500);
+    logger.error(err);
+    throw new HTTPException(500, { message: "Internal Server Error" });
   }
 });
 

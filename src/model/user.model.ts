@@ -1,3 +1,4 @@
+import { InferInsertModel, InferSelectModel } from "drizzle-orm";
 import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
 
 export const Users = sqliteTable("users", {
@@ -11,6 +12,13 @@ export const Users = sqliteTable("users", {
   locale: text("locale"),
   hd: text("hd"),
   profile: text("profile"),
-  createdAt: integer("createdAt", { mode: "timestamp" }).notNull(),
-  updatedAt: integer("updatedAt", { mode: "timestamp" }).notNull(),
+  created_at: text("created_at")
+    .notNull()
+    .$defaultFn(() => new Date().toISOString()),
+  updated_at: text("updated_at")
+    .notNull()
+    .$defaultFn(() => new Date().toISOString()),
 });
+
+export type UsersSelectType = InferSelectModel<typeof Users>;
+export type UsersInsertType = InferInsertModel<typeof Users>;

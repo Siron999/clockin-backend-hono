@@ -1,6 +1,8 @@
 import { decode, sign, verify } from "hono/jwt";
 import logger from "../configs/logger.config.js";
 import { UserType } from "../types/types.js";
+import { JWTPayload } from "hono/utils/jwt/types";
+import { HTTPException } from "hono/http-exception";
 
 export class JWTService {
   jwtSecret: string;
@@ -8,15 +10,15 @@ export class JWTService {
     this.jwtSecret = jwtSecret;
   }
   async generateToken(user: UserType) {
-    const payload = {
-      sub: user.id,
+    const payload: JWTPayload = {
+      sub: user.id as number,
       email: user.email,
       exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 7,
     };
     return await sign(payload, this.jwtSecret);
   }
 
-  async verifyAccessToken(token: string) {
+  async verifyAccessToken(token: string): Promise<JWTPayload> {
     try {
       const secret = this.jwtSecret;
       if (!secret) {
@@ -25,7 +27,7 @@ export class JWTService {
       return await verify(token, secret);
     } catch (error) {
       logger.error("Access Token verification failed:", error);
-      return null;
+      throw new HTTPException(401, { message: "Invalid token" });
     }
   }
 

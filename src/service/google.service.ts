@@ -1,13 +1,8 @@
+import { HTTPException } from "hono/http-exception";
 import logger from "../configs/logger.config.js";
 import { GooglePayload } from "../types/types.js";
 
 export class GoogleService {
-  private googleId: string;
-
-  constructor(googleId: string) {
-    this.googleId = googleId;
-  }
-
   async validateGoogleToken(token: string): Promise<GooglePayload> {
     try {
       const response = await fetch(
@@ -24,7 +19,9 @@ export class GoogleService {
       return payload as GooglePayload;
     } catch (error) {
       logger.error("Error in validateGoogleToken:", error);
-      throw new Error("Invalid Google token");
+      throw new HTTPException(400, {
+        message: "Invalid Google Token Error from Google",
+      });
     }
   }
 

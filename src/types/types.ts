@@ -3,6 +3,28 @@ export interface ResponseDTO {
   message: string;
   data?: any;
   error?: any;
+  pagination?: {
+    total: number;
+    currentPage: number;
+    totalPages: number;
+    pageSize: number;
+    hasMore: boolean;
+  };
+}
+
+export type PaginatedResponse<T, K extends string = "data"> = {
+  [key in K]: T[];
+} & {
+  total: number;
+  currentPage: number;
+  totalPages: number;
+  pageSize: number;
+  hasMore: boolean;
+};
+
+export interface PaginationParams {
+  page?: number;
+  pageSize?: number;
 }
 
 export interface UserType {
@@ -22,7 +44,6 @@ export type ENV = {
   DB: D1Database;
   BACKEND_URL: string;
   FRONTEND_URL: string;
-  GOOGLE_ID: string;
   JWT_SECRET: string;
 };
 
@@ -36,4 +57,11 @@ export interface GooglePayload {
   locale: string;
   hd: string;
   profile: string;
+}
+
+export interface JWTPayload {
+  email: string;
+  sub: number;
+  exp: number;
+  signature?: string;
 }

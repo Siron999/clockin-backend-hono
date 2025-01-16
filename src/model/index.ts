@@ -1,2 +1,3 @@
 import { Users } from "./user.model";
-export { Users };
+import { Tasks, DailyLogs } from "./task.models";
+export { Users, Tasks, DailyLogs };
