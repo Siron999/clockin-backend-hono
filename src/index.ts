@@ -19,7 +19,7 @@ app.use("*", async (c, next) => {
   }
 });
 
-app.use("*", async (c, next) => {
+app.use("*", async (c, next) =>
   cors({
     origin: c.env.FRONTEND_URL,
     allowHeaders: ["*"],
@@ -27,9 +27,8 @@ app.use("*", async (c, next) => {
     exposeHeaders: ["Content-Length"],
     maxAge: 600,
     credentials: true,
-  });
-  await next();
-});
+  })(c, next)
+);
 
 app.get("/", async (c) => {
   return c.json({
